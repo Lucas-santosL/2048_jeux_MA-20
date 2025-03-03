@@ -3,7 +3,7 @@ name projet: 2048_jeux
 autor: Lucas Santos
 date: 10.02.25
 """
-
+from tkinter import messagebox
 from tkinter import *
 import random
 
@@ -43,31 +43,89 @@ def pack_4(a, b, c, d):
         moves = moves + 1
 
     if c==d and c != 0:
-        c=2*c
+        c=2 * c
         d=0
         moves = moves + 1
 
     return a, b, c, d, moves
 
+def generate_tuiles():
+    positions = random.sample([(x, y) for x in range(len(nombres)) for y in range(len(nombres)) if nombres[x][y] == 0],
+                          1)  # Affichage aléatoire sur la grille (avec ChatGPT)for x, y in positions:
+    for x, y in positions:
+        nombres[x][y] = 2 if random.random() < 0.8 else 4
+
+def is_win():
+    global win
+    if win is True:
+        return False
+    for row in range(4):
+        for col in range(4):
+            if nombres[row][col] == 2048:
+                win = True
+                messagebox.showinfo("message de victoire!", "vous avez gagné")
+                return True
+    return False
+
+def is_game_full():
+    for line in range(4):
+        for col in range(4):
+            if nombres[line][col] == 0:
+                return False
+    return True
+
+def count_mergeable():
+    count=0
+    for line in range(4):
+        for col in range(3):
+            if nombres[line][col] == nombres[line][col+1]:
+                count +=1
+    for col in range(4):
+        for line in range(3):
+            if nombres[line][col] == nombres[line+1][col]:
+                count +=1
+    return count
+
+def reset():
+    global nombres
+    nombres = [
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0]
+    ]
+    generate_tuiles()
+    generate_tuiles()
+    display_game()
+
+
 #avec l'aide de chat gpt
 def bouger(direction):
+    moves = 0
     if direction == "left":
         for i in range(4):
-            nombres[i][0], nombres[i][1], nombres[i][2], nombres[i][3], moves = pack_4(nombres[i][0], nombres[i][1], nombres[i][2], nombres[i][3])
+            nombres[i][0], nombres[i][1], nombres[i][2], nombres[i][3], move = pack_4(nombres[i][0], nombres[i][1], nombres[i][2], nombres[i][3])
+            moves = moves + move
     elif direction == "right":
         for i in range(4):
-            nombres[i][3], nombres[i][2], nombres[i][1], nombres[i][0], moves = pack_4(nombres[i][3], nombres[i][2], nombres[i][1], nombres[i][0])
+            nombres[i][3], nombres[i][2], nombres[i][1], nombres[i][0], move = pack_4(nombres[i][3], nombres[i][2], nombres[i][1], nombres[i][0])
+            moves = moves + move
     elif direction == "up":
-        for j in range(4):
-            colonne = pack_4(nombres[0][j], nombres[1][j], nombres[2][j], nombres[3][j])
-            for i in range(4):
-                nombres[i][j] = colonne[i]
+        for i in range(4):
+            nombres[0][i], nombres[1][i], nombres[2][i], nombres[3][i], move = pack_4(nombres[0][i], nombres[1][i], nombres[2][i], nombres[3][i])
+            moves = moves + move
     elif direction == "down":
-        for j in range(4):
-            colonne = pack_4(nombres[3][j], nombres[2][j], nombres[1][j], nombres[0][j])
-            for i in range(4):
-                nombres[3 - i][j] = colonne[i]
+        for i in range(4):
+            nombres[3][i], nombres[2][i], nombres[1][i], nombres[0][i], move = pack_4(nombres[3][i], nombres[2][i], nombres[1][i], nombres[0][i])
+            moves = moves + move
+    if moves > 0 :
+        generate_tuiles()
 
+    display_game()
+    is_win()
+
+    if is_game_full() and count_mergeable() == 0:
+        messagebox.showinfo("message de défaite", "perdu!")
 
 # Fonction pour mettre à jour l'affichage du jeu
 def display_game():
@@ -86,7 +144,7 @@ def key_press(event):
     elif event.keysym == "Down":
         bouger("down")
 
-    display_game()
+
 
 # Initialisation de la fenêtre
 window = Tk()
@@ -110,7 +168,7 @@ frame_bottom = Frame(window)
 frame_bottom.pack(fill=X)
 
 # Bouton reset
-bt_reset = Button(frame_bottom, text="RESET", bg="#7F7F7F", font=("Arial", 20, "italic"))
+bt_reset = Button(frame_bottom, text="RESET", bg="#7F7F7F", font=("Arial", 20, "italic"), command=reset)
 bt_reset.pack(side=LEFT, padx=15, pady=20)
 
 # Initialisation de la grille avec des valeurs
@@ -121,9 +179,8 @@ nombres = [
     [0, 0, 0, 0]
 ]
 
-positions = random.sample([(x, y) for x in range(len(nombres)) for y in range(len(nombres))], 2) # Affichage aléatoire sur la grille (avec ChatGPT)for x, y in positions:
-for x, y in positions:
-    nombres[x][y] = 2 # Placer un "2" sur la grille
+generate_tuiles()
+generate_tuiles()
 
 #nombres= [
     #[2, 4, 8, 16,],
@@ -132,7 +189,7 @@ for x, y in positions:
     #[0, 0, 0, 0 ],
 #]
 
-
+win = False
 
 cases = [
     [None, None, None, None],
@@ -146,7 +203,7 @@ couleurs = {
     2: "#DFF2FF",
     4: "#A9EAFE",
     8: "#0F9DE8",
-    16: "#CCCCFF",
+    16: "#9683EC",
     32: "#9683EC",
     64: "#1034A6",
     128: "#003399",
